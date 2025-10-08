@@ -371,6 +371,85 @@ EOF
     echo
 }
 
+# Detect system resources
+detect_system_resources() {
+    echo -e "${CYAN}🔍 Detecting system resources...${NC}"
+    
+    local cpus=8
+    local memory_mb=16000
+    
+    # Detect CPUs
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # macOS
+        cpus=$(sysctl -n hw.ncpu 2>/dev/null || echo 8)
+        # Get memory in bytes and convert to MB
+        memory_bytes=$(sysctl -n hw.memsize 2>/dev/null || echo 17179869184)
+        memory_mb=$((memory_bytes / 1024 / 1024))
+    else
+        # Linux
+        cpus=$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo 2>/dev/null || echo 8)
+        # Get memory in KB and convert to MB
+        memory_kb=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}' || echo 16777216)
+        memory_mb=$((memory_kb / 1024))
+    fi
+    
+    # Docker Desktop typically has less memory than the system
+    # Check Docker's actual memory limit
+    if command -v docker &> /dev/null; then
+        docker_memory=$(docker run --rm alpine sh -c 'cat /proc/meminfo | grep MemTotal' 2>/dev/null | awk '{print $2}' || echo 0)
+        if [[ $docker_memory -gt 0 ]]; then
+            docker_memory_mb=$((docker_memory / 1024))
+            # Use Docker's memory if it's less than system memory
+            if [[ $docker_memory_mb -lt $memory_mb ]]; then
+                memory_mb=$docker_memory_mb
+                echo -e "${YELLOW}  Docker memory limit detected: ${memory_mb} MB${NC}"
+            fi
+        fi
+    fi
+    
+    # Leave some memory for the system (use 90% of available)
+    memory_mb=$((memory_mb * 90 / 100))
+    
+    echo -e "${GREEN}✓ Detected: ${cpus} CPUs, ${memory_mb} MB RAM available for Slurm${NC}"
+    
+    # Export for use in other functions
+    export DETECTED_CPUS=$cpus
+    export DETECTED_MEMORY=$memory_mb
+    echo
+}
+
+# Configure Slurm with detected resources
+configure_slurm() {
+    echo -e "${CYAN}⚙️  Configuring Slurm with detected resources...${NC}"
+    
+    if [[ ! -d "config" ]]; then
+        mkdir -p config
+    fi
+    
+    # Create or update slurm.conf with detected resources
+    cat > "config/slurm.conf" << EOF
+ClusterName=${DOCKER_PREFIX}-slurm
+SlurmctldHost=localhost
+
+# LOGGING
+SlurmctldLogFile=/var/log/slurm/slurmctld.log
+SlurmdLogFile=/var/log/slurm/slurmd.log
+SlurmdDebug=debug5
+SlurmctldDebug=debug5
+
+# COMPUTE NODES - Auto-configured based on system resources
+# Detected: ${DETECTED_CPUS} CPUs, ${DETECTED_MEMORY} MB RAM
+NodeName=localhost CPUs=${DETECTED_CPUS} RealMemory=${DETECTED_MEMORY} TmpDisk=100000 State=UNKNOWN
+PartitionName=debug Nodes=localhost Default=YES MaxTime=INFINITE State=UP DefMemPerCPU=$((DETECTED_MEMORY / DETECTED_CPUS)) MaxMemPerCPU=$((DETECTED_MEMORY / DETECTED_CPUS * 2))
+
+# PROCESS TRACKING
+ProctrackType=proctrack/linuxproc
+EOF
+    
+    echo -e "${GREEN}✓ Slurm configured with: ${DETECTED_CPUS} CPUs, ${DETECTED_MEMORY} MB RAM${NC}"
+    echo
+}
+
 # Configure docker-compose with dynamic prefix
 configure_docker_compose() {
     echo -e "${CYAN}⚙️  Configuring Docker Compose with prefix: $DOCKER_PREFIX${NC}"
@@ -452,6 +531,8 @@ main() {
     validate_environment
     setup_repository
     setup_environment
+    detect_system_resources
+    configure_slurm
     configure_docker_compose
     generate_env_file
     
