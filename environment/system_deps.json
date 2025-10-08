@@ -1,5 +1,13 @@
 {
   "apt_packages": [
-    
+    "libxml2-dev",
+    "libcurl4-openssl-dev",
+    "libssl-dev",
+    "libgit2-dev",
+    "libfontconfig1-dev",
+    "libfreetype6-dev",
+    "libpng-dev",
+    "libtiff5-dev",
+    "libjpeg-dev"
   ]
 } 
