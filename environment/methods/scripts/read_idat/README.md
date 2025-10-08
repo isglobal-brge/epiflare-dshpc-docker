@@ -78,22 +78,32 @@ This method has no configurable parameters. Quality control thresholds are fixed
 
 ## Output JSON
 
-The method returns a JSON object with:
+The method returns a JSON object with the data directly embedded:
 ```json
 {
   "status": "success",
   "message": "IDAT files processed successfully",
-  "output_files": {
-    "betas": "Betas.csv",
-    "pheno": "pheno.csv"
+  "data": {
+    "betas": [
+      {"CpG": "cg00000029", "Sample1": 0.85, "Sample2": 0.79},
+      {"CpG": "cg00000108", "Sample1": 0.92, "Sample2": 0.88}
+    ],
+    "pheno": [
+      {"Sample_ID": "Sample1", "Sex": "M", "Age": 45},
+      {"Sample_ID": "Sample2", "Sex": "F", "Age": 52}
+    ]
   },
   "summary": {
-    "samples_processed": 10,
+    "samples_processed": 2,
     "cpgs_retained": 850000,
-    "samples_filtered": 2
+    "samples_filtered": 1
   }
 }
 ```
+
+**Output Data:**
+- **betas**: Array of objects with CpG methylation values (0-1 range) for each sample
+- **pheno**: Array of objects with sample metadata after quality control
 
 ## Dependencies
 
@@ -106,7 +116,8 @@ The method returns a JSON object with:
 
 - This method uses functional normalization which requires sex information
 - Processing time depends on the number of samples and array type
-- Large datasets will produce large output files
+- Data is returned directly in JSON (no file writes)
+- For large datasets, the JSON response can be substantial (~100MB+ for typical studies)
 - All quality control metrics are fixed (not user-configurable)
 
 ## References

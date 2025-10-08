@@ -95,16 +95,18 @@ read_idat <- function(archive_path) {
     pheno <- as.data.frame(colData(GRset))
     Betas <- getBeta(GRset)
     
-    # Save output files
-    output_dir <- getwd()
-    betas_file <- file.path(output_dir, "Betas.csv")
-    pheno_file <- file.path(output_dir, "pheno.csv")
+    # Convert Betas matrix to data frame with CpG names as a column
+    message("************* Preparing Betas data for output")
+    betas_df <- as.data.frame(Betas)
+    betas_df$CpG <- rownames(Betas)
+    # Move CpG column to first position
+    betas_df <- betas_df[, c("CpG", setdiff(names(betas_df), "CpG"))]
     
-    message("************* Saving Betas matrix")
-    write.csv(Betas, betas_file, row.names = TRUE)
-    
-    message("************* Saving pheno data")
-    write.csv(pheno, pheno_file, row.names = TRUE)
+    # Add sample IDs as column for pheno data
+    message("************* Preparing pheno data for output")
+    pheno$Sample_ID <- rownames(pheno)
+    # Move Sample_ID to first position
+    pheno <- pheno[, c("Sample_ID", setdiff(names(pheno), "Sample_ID"))]
     
     # Clean up temporary extraction directory
     message("************* Cleaning up temporary files")
@@ -113,9 +115,9 @@ read_idat <- function(archive_path) {
     result <- list(
       status = "success",
       message = "IDAT files processed successfully",
-      output_files = list(
-        betas = "Betas.csv",
-        pheno = "pheno.csv"
+      data = list(
+        betas = betas_df,
+        pheno = pheno
       ),
       summary = list(
         samples_processed = ncol(Betas),
