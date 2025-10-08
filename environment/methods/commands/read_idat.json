@@ -1,0 +1,9 @@
+{
+  "name": "read_idat",
+  "description": "Process methylation array IDAT files using minfi. Expects a tar.gz archive containing pheno.csv and IDATs/ subfolder. Returns Beta values and phenotype data after quality control and functional normalization.",
+  "command": "Rscript",
+  "script_path": "main.R",
+  "parameters": [],
+  "version": "1.0.0"
+}
+
