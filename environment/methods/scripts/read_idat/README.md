@@ -76,13 +76,60 @@ The method generates two CSV files:
 This method has no configurable parameters. Quality control thresholds are fixed at:
 - Detection p-value threshold: 0.01
 
-## Output JSON
+## Output Formats
 
-The method returns a JSON object with the data directly embedded:
+The method supports multiple output formats controlled by the `output_format` parameter:
+- **json**: Traditional JSON format (large but universally compatible)
+- **parquet**: Binary Parquet format embedded as base64 (compact and efficient)
+- **hybrid** (default): Uses Parquet for data tables and JSON for metadata
+
+### Hybrid/Parquet Format (Default)
+
+When using Parquet format, data is compressed and encoded as base64 for efficient transport:
+
 ```json
 {
   "status": "success",
   "message": "IDAT files processed successfully",
+  "format": "parquet",
+  "data": {
+    "betas": {
+      "data": "<base64-encoded-parquet-data>",
+      "format": "parquet",
+      "compression": "snappy",
+      "size_bytes": 45678901,
+      "rows": 850000,
+      "cols": 111
+    },
+    "pheno": {
+      "data": "<base64-encoded-parquet-data>",
+      "format": "parquet", 
+      "compression": "snappy",
+      "size_bytes": 12345,
+      "rows": 110,
+      "cols": 5
+    }
+  },
+  "summary": {
+    "samples_processed": 110,
+    "cpgs_retained": 850000,
+    "samples_filtered": 0,
+    "data_size": {
+      "betas": "43.5 MB",
+      "pheno": "12.1 KB"
+    }
+  }
+}
+```
+
+### JSON Format (Legacy)
+
+Traditional JSON format with data directly embedded:
+```json
+{
+  "status": "success",
+  "message": "IDAT files processed successfully",
+  "format": "json",
   "data": {
     "betas": [
       {"CpG": "cg00000029", "Sample1": 0.85, "Sample2": 0.79},
@@ -101,9 +148,18 @@ The method returns a JSON object with the data directly embedded:
 }
 ```
 
+### Size Comparison
+
+For a dataset with 110 samples and 850,000 CpGs:
+- **JSON format**: ~1,700 MB (uncompressed in memory)
+- **Parquet format**: ~45 MB (compressed with snappy algorithm)
+- **Size reduction**: ~97% smaller
+- **Plus**: Parquet preserves data types exactly (no float precision loss)
+
 **Output Data:**
-- **betas**: Array of objects with CpG methylation values (0-1 range) for each sample
-- **pheno**: Array of objects with sample metadata after quality control
+- **betas**: CpG methylation values (0-1 range) for each sample
+- **pheno**: Sample metadata after quality control
+- **format**: Indicates whether data is in "json" or "parquet" format
 
 ## Dependencies
 

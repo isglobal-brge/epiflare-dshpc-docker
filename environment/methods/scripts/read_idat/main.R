@@ -5,6 +5,8 @@ library(minfi)
 library(jsonlite)
 library(readr)
 library(dplyr)
+library(arrow)
+library(base64enc)
 
 # Function to extract compressed file
 extract_archive <- function(archive_path, extract_dir) {
@@ -33,8 +35,50 @@ extract_archive <- function(archive_path, extract_dir) {
   return(extract_dir)
 }
 
+# Function to convert dataframe to Parquet and encode as base64
+dataframe_to_parquet_base64 <- function(df) {
+  tryCatch({
+    # Create a temporary file for Parquet
+    temp_file <- tempfile(fileext = ".parquet")
+    
+    # Write dataframe to Parquet with compression
+    arrow::write_parquet(
+      df,
+      temp_file,
+      compression = "snappy",  # Fast compression, good balance
+      use_dictionary = TRUE    # Better compression for repeated values
+    )
+    
+    # Encode the Parquet file to base64
+    parquet_base64 <- base64enc::base64encode(temp_file)
+    
+    # Get file size for metadata
+    file_size <- file.info(temp_file)$size
+    
+    # Clean up
+    unlink(temp_file)
+    
+    return(list(
+      data = parquet_base64,
+      format = "parquet",
+      compression = "snappy",
+      size_bytes = file_size,
+      rows = nrow(df),
+      cols = ncol(df)
+    ))
+  }, error = function(e) {
+    # Fallback to JSON if Parquet fails
+    warning(paste("Failed to convert to Parquet:", e$message))
+    return(list(
+      data = df,
+      format = "json",
+      error = e$message
+    ))
+  })
+}
+
 # Main function to read and process IDAT files
-read_idat <- function(archive_path) {
+read_idat <- function(archive_path, output_format = "hybrid") {
   tryCatch({
     # Create temporary directory for extraction
     temp_dir <- tempdir()
@@ -112,19 +156,61 @@ read_idat <- function(archive_path) {
     message("************* Cleaning up temporary files")
     unlink(extract_dir, recursive = TRUE)
     
-    result <- list(
-      status = "success",
-      message = "IDAT files processed successfully",
-      data = list(
-        betas = betas_df,
-        pheno = pheno
-      ),
-      summary = list(
-        samples_processed = ncol(Betas),
-        cpgs_retained = nrow(Betas),
-        samples_filtered = sum(!keep)
+    # Decide output format based on parameter
+    if (output_format == "parquet" || output_format == "hybrid") {
+      message("************* Converting data to Parquet format")
+      
+      # Convert both dataframes to Parquet
+      betas_parquet <- dataframe_to_parquet_base64(betas_df)
+      pheno_parquet <- dataframe_to_parquet_base64(pheno)
+      
+      # Create result with Parquet data
+      result <- list(
+        status = "success",
+        message = "IDAT files processed successfully",
+        format = ifelse(
+          betas_parquet$format == "parquet" && pheno_parquet$format == "parquet",
+          "parquet",
+          "mixed"
+        ),
+        data = list(
+          betas = betas_parquet,
+          pheno = pheno_parquet
+        ),
+        summary = list(
+          samples_processed = ncol(Betas),
+          cpgs_retained = nrow(Betas),
+          # samples_filtered refers to CpGs filtered out based on detection p-values
+          # keep <- rowSums(detP < 0.01) == ncol(GRset) filters CpGs where all samples have detP < 0.01
+          # sum(!keep) counts how many CpGs were removed due to poor detection p-values
+          samples_filtered = sum(!keep),
+          data_size = list(
+            betas = paste0(round(betas_parquet$size_bytes / 1024 / 1024, 2), " MB"),
+            pheno = paste0(round(pheno_parquet$size_bytes / 1024, 2), " KB")
+          )
+        )
       )
-    )
+      
+      message(sprintf("************* Betas Parquet size: %.2f MB", betas_parquet$size_bytes / 1024 / 1024))
+      message(sprintf("************* Pheno Parquet size: %.2f KB", pheno_parquet$size_bytes / 1024))
+      
+    } else {
+      # Legacy JSON format
+      result <- list(
+        status = "success",
+        message = "IDAT files processed successfully",
+        format = "json",
+        data = list(
+          betas = betas_df,
+          pheno = pheno
+        ),
+        summary = list(
+          samples_processed = ncol(Betas),
+          cpgs_retained = nrow(Betas),
+          samples_filtered = sum(!keep)
+        )
+      )
+    }
     
     return(result)
     
@@ -185,15 +271,40 @@ main <- function() {
     return(FALSE)
   })
   
+  # Check for output format parameter (default to hybrid for optimal size)
+  output_format <- ifelse(
+    !is.null(params$output_format),
+    params$output_format,
+    "hybrid"  # Default to hybrid format (Parquet for data, JSON for metadata)
+  )
+  
   # Process the IDAT files
-  result <- read_idat(input_file)
+  result <- read_idat(input_file, output_format)
   
   # Add parameters applied to the result
   result$parameters_applied <- params
   
   # Output the result as JSON
-  cat(toJSON(result, auto_unbox = TRUE, pretty = TRUE))
-  return(result$status == "success")
+  # For large outputs, write to stdout efficiently
+  tryCatch({
+    # Convert to JSON without pretty printing for large outputs
+    # Pretty printing can cause issues with very large strings
+    json_output <- toJSON(result, auto_unbox = TRUE, pretty = FALSE)
+    
+    # Write the JSON output
+    # Use writeLines for better handling of large strings
+    writeLines(json_output, con = stdout())
+    
+    return(result$status == "success")
+  }, error = function(e) {
+    # If JSON serialization fails, output an error
+    error_result <- list(
+      status = "error",
+      message = paste("Failed to serialize output:", e$message)
+    )
+    cat(toJSON(error_result, auto_unbox = TRUE))
+    return(FALSE)
+  })
 }
 
 # Run main function
