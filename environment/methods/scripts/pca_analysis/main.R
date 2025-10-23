@@ -92,6 +92,8 @@ pca_topVariable <- function(
   message("************* Calculating variance explained")
   var_explained <- round(((pca_res$sdev**2) * 100) / (sum(pca_res$sdev ** 2)), 2)
   names(var_explained) <- colnames(pca_res$x)
+  # Convert to named list for better JSON serialization
+  var_explained_list <- as.list(var_explained)
   
   message("************* Preparing PCA results")
   pca_df <- bind_cols(as_tibble(colData(SE)), as_tibble(round(pca_res$x, 2)))
@@ -116,7 +118,7 @@ pca_topVariable <- function(
   
   return(list(
     plot = plot_base64,
-    variance_explained = var_explained,
+    variance_explained = var_explained_list,  # Use list for better JSON serialization
     pca_coordinates = as.data.frame(pca_res$x),
     n_samples = ncol(SE),
     n_cpgs_used = length(top_var),
