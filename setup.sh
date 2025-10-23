@@ -437,6 +437,10 @@ SlurmdLogFile=/var/log/slurm/slurmd.log
 SlurmdDebug=debug5
 SlurmctldDebug=debug5
 
+# SCHEDULER - Allow multiple jobs to run simultaneously
+SelectType=select/cons_tres
+SelectTypeParameters=CR_Core
+
 # COMPUTE NODES - Auto-configured based on system resources
 # Detected: ${DETECTED_CPUS} CPUs, ${DETECTED_MEMORY} MB RAM
 NodeName=localhost CPUs=${DETECTED_CPUS} RealMemory=${DETECTED_MEMORY} TmpDisk=100000 State=UNKNOWN
