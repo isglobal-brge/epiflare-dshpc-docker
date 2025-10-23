@@ -1,0 +1,22 @@
+{
+  "name": "pca_analysis",
+  "description": "Performs PCA analysis on methylation beta values from read_idat output. Filters sex chromosomes, selects top variable CpGs, and generates PCA plot.",
+  "command": "Rscript",
+  "script_path": "main.R",
+  "parameters": [
+    {
+      "name": "top_CpG",
+      "type": "integer",
+      "description": "Number of most variable CpGs to use for PCA",
+      "default": 10000
+    },
+    {
+      "name": "array",
+      "type": "string",
+      "description": "Array type for annotations (450k, EPIC, or EPICv2)",
+      "default": "EPIC"
+    }
+  ],
+  "version": "1.0.0"
+}
+
