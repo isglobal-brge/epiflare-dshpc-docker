@@ -204,7 +204,7 @@ main <- function() {
       message = "Usage: Rscript main.R <input_file> <params_file>"
     )
     cat(toJSON(result, auto_unbox = TRUE))
-    return(FALSE)
+    quit(status = 1)  # Exit immediately with error
   }
   
   input_file <- args[1]
@@ -217,7 +217,7 @@ main <- function() {
       message = paste("Error: Input file", input_file, "does not exist")
     )
     cat(toJSON(result, auto_unbox = TRUE))
-    return(FALSE)
+    quit(status = 1)  # Exit immediately with error
   }
   
   # Check if the params file exists
@@ -227,31 +227,31 @@ main <- function() {
       message = paste("Error: Parameters file", params_file, "does not exist")
     )
     cat(toJSON(result, auto_unbox = TRUE))
-    return(FALSE)
+    quit(status = 1)  # Exit immediately with error
   }
   
   # Load the previous result
-  tryCatch({
-    previous_result <- fromJSON(readLines(input_file, warn = FALSE))
+  previous_result <- tryCatch({
+    fromJSON(readLines(input_file, warn = FALSE))
   }, error = function(e) {
     result <- list(
       status = "error",
       message = paste("Error loading previous result:", e$message)
     )
     cat(toJSON(result, auto_unbox = TRUE))
-    return(FALSE)
+    quit(status = 1)  # Exit immediately with error
   })
   
   # Load the parameters
-  tryCatch({
-    params <- fromJSON(readLines(params_file, warn = FALSE))
+  params <- tryCatch({
+    fromJSON(readLines(params_file, warn = FALSE))
   }, error = function(e) {
     result <- list(
       status = "error",
       message = paste("Error loading parameters:", e$message)
     )
     cat(toJSON(result, auto_unbox = TRUE))
-    return(FALSE)
+    quit(status = 1)  # Exit immediately with error
   })
   
   # Get parameters with defaults
@@ -275,14 +275,13 @@ main <- function() {
       message = paste("Failed to serialize output:", e$message)
     )
     cat(toJSON(error_result, auto_unbox = TRUE))
-    return(FALSE)
+    quit(status = 1)  # Exit immediately with error
   })
 }
 
 # Run main function
 if (sys.nframe() == 0) {
   success <- main()
-  # Exit with appropriate code: 0 for success, 1 for error
   quit(status = if(success) 0 else 1)
 }
 
