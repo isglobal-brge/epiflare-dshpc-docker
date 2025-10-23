@@ -282,6 +282,7 @@ main <- function() {
 # Run main function
 if (sys.nframe() == 0) {
   success <- main()
-  quit(status = 0)
+  # Exit with appropriate code: 0 for success, 1 for error
+  quit(status = if(success) 0 else 1)
 }
 
