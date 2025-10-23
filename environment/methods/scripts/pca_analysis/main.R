@@ -2,9 +2,7 @@
 
 # Load necessary libraries
 library(SummarizedExperiment)
-library(ggplot2)
 library(dplyr)
-library(tibble)
 library(arrow)
 library(base64enc)
 library(jsonlite)
@@ -95,31 +93,20 @@ pca_topVariable <- function(
   # Convert to named list for better JSON serialization
   var_explained_list <- as.list(var_explained)
   
-  message("************* Preparing PCA results")
-  pca_df <- bind_cols(as_tibble(colData(SE)), as_tibble(round(pca_res$x, 2)))
+  message("************* Preparing PCA results with metadata")
+  # Get PCA coordinates
+  pca_coords <- as.data.frame(pca_res$x)
   
-  message("************* Creating PCA plot")
-  plt <- ggplot(data = pca_df,
-                mapping = aes(x = PC1, y = PC2)) +
-                      geom_point(mapping = aes(col = Case_Cont, shape = Sex), size = 2.5, alpha = 0.9) +
-                      stat_ellipse(mapping = aes(col = Case_Cont), level = 0.99, alpha = 0.5, lty = 2, show.legend = FALSE) +
-                      labs(title = "PCA plot",
-                          x = paste0("PC1 (", var_explained["PC1"], "% var)"),
-                          y = paste0("PC2 (", var_explained["PC2"], "% var)")
-                          ) +
-                      theme_minimal()
+  # Get sample metadata (colData from SummarizedExperiment)
+  sample_metadata <- as.data.frame(colData(SE))
   
-  # Save plot to PNG and encode as base64
-  message("************* Encoding plot as PNG/base64")
-  temp_plot <- tempfile(fileext = ".png")
-  ggsave(temp_plot, plot = plt, width = 10, height = 8, dpi = 150)
-  plot_base64 <- base64enc::base64encode(temp_plot)
-  unlink(temp_plot)
+  # Ensure row names match
+  sample_metadata <- sample_metadata[rownames(pca_coords), , drop = FALSE]
   
   return(list(
-    plot = plot_base64,
-    variance_explained = var_explained_list,  # Use list for better JSON serialization
-    pca_coordinates = as.data.frame(pca_res$x),
+    pca_coordinates = pca_coords,
+    sample_metadata = sample_metadata,
+    variance_explained = var_explained_list,
     n_samples = ncol(SE),
     n_cpgs_used = length(top_var),
     n_cpgs_filtered = nrow(SE)
