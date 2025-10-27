@@ -12,6 +12,9 @@
     "IlluminaHumanMethylationEPICmanifest": "0.3.0",
     "IlluminaHumanMethylationEPICanno.ilm10b4.hg19": "0.6.0",
     "IlluminaHumanMethylationEPICv2manifest": "1.0.0",
-    "IlluminaHumanMethylationEPICv2anno.20a1.hg38": "1.0.0"
+    "IlluminaHumanMethylationEPICv2anno.20a1.hg38": "1.0.0",
+    "EpiDISH": "2.20.0",
+    "limma": "3.60.0",
+    "tibble": "3.2.1"
   }
 } 

@@ -1,0 +1,39 @@
+{
+  "name": "ewas_analysis",
+  "description": "Perform epigenome-wide association study (eWAS) on methylation data. Expects previous result with betas and pheno (e.g., from read_idat). Returns table of significant DMPs with statistics.",
+  "command": "Rscript",
+  "script_path": "main.R",
+  "parameters": [
+    {
+      "name": "covariates",
+      "type": "array",
+      "description": "Vector of covariate column names to include in model",
+      "required": false,
+      "default": ["Case_Cont", "Sex"]
+    },
+    {
+      "name": "epi_type",
+      "type": "string",
+      "description": "Type of analysis: 'BC' for blood cell deconvolution",
+      "required": false,
+      "default": "BC",
+      "allowed_values": ["BC"]
+    },
+    {
+      "name": "padj_threshold",
+      "type": "number",
+      "description": "Adjusted p-value threshold for significance",
+      "required": false,
+      "default": 0.01
+    },
+    {
+      "name": "deltaB_threshold",
+      "type": "number",
+      "description": "Minimum absolute delta beta threshold",
+      "required": false,
+      "default": 0.3
+    }
+  ],
+  "version": "1.0.0"
+}
+
