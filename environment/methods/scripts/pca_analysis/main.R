@@ -198,17 +198,30 @@ perform_pca_analysis <- function(previous_result, top_CpG = 10000, array = "EPIC
 main <- function() {
   args <- commandArgs(trailingOnly = TRUE)
   
-  if (length(args) < 2) {
+  if (length(args) < 3) {
     result <- list(
       status = "error",
-      message = "Usage: Rscript main.R <input_file> <params_file>"
+      message = "Usage: Rscript main.R <input_file> <metadata_file> <params_file>"
     )
     cat(toJSON(result, auto_unbox = TRUE))
     quit(status = 1)  # Exit immediately with error
   }
   
   input_file <- args[1]
-  params_file <- args[2]
+  metadata_file <- args[2]
+  params_file <- args[3]
+  
+  # Load metadata (contains workspace_dir and file paths)
+  metadata <- tryCatch({
+    fromJSON(readLines(metadata_file, warn = FALSE))
+  }, error = function(e) {
+    result <- list(
+      status = "error",
+      message = paste("Error loading metadata:", e$message)
+    )
+    cat(toJSON(result, auto_unbox = TRUE))
+    quit(status = 1)
+  })
   
   # Check if the input file exists (this is the result from previous job)
   if (!file.exists(input_file)) {

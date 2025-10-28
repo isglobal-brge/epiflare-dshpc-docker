@@ -212,17 +212,30 @@ perform_ewas_analysis <- function(previous_result, covariates, epi_type, padj_th
 main <- function() {
   args <- commandArgs(trailingOnly = TRUE)
   
-  if (length(args) < 2) {
+  if (length(args) < 3) {
     result <- list(
       status = "error",
-      message = "Usage: Rscript main.R <input_file> <params_file>"
+      message = "Usage: Rscript main.R <input_file> <metadata_file> <params_file>"
     )
     cat(toJSON(result, auto_unbox = TRUE))
     quit(status = 1)
   }
   
   input_file <- args[1]
-  params_file <- args[2]
+  metadata_file <- args[2]
+  params_file <- args[3]
+  
+  # Load metadata (contains workspace_dir and file paths)
+  metadata <- tryCatch({
+    fromJSON(readLines(metadata_file, warn = FALSE))
+  }, error = function(e) {
+    result <- list(
+      status = "error",
+      message = paste("Error loading metadata:", e$message)
+    )
+    cat(toJSON(result, auto_unbox = TRUE))
+    quit(status = 1)
+  })
   
   # Check if files exist
   if (!file.exists(input_file)) {
