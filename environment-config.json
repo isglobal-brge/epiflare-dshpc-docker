@@ -4,5 +4,36 @@
   "docker_stack_prefix": "dshpc-epiflare",
   "base_repository": "https://github.com/isglobal-brge/dsHPC-docker.git",
   "default_api_port": 8001,
-  "description": "DataSHIELD HPC Environment for EpiFLARE"
+  "default_admin_port": 8002,
+  "description": "Provides DataSHIELD-compatible functions for methylation array analysis using the dsHPC infrastructure. Includes functions for reading IDAT files and performing PCA analysis with local plot generation.",
+  "project_website": "https://github.com/isglobal-brge/epiflare-dshpc-docker",
+  "authors": [
+    {
+      "name": "David Sarrat González",
+      "institution": "Barcelona Institute for Global Health (ISGlobal)",
+      "institution_url": "https://isglobal.org",
+      "email": "david.sarrat@isglobal.org",
+      "orcid": "0000-0002-9064-3303",
+      "website": "https://davidsarratgonzalez.github.io",
+      "linkedin": "https://linkedin.com/in/davidsarratgonzalez",
+      "github": "davidsarratgonzalez"
+    },
+    {
+      "name": "Albert Alegret i Garcia",
+      "institution": "Barcelona Institute for Global Health (ISGlobal)",
+      "institution_url": "https://isglobal.org",
+      "email": "albert.alegret@isglobal.org",
+      "orcid": "0009-0009-5420-1311",
+      "linkedin": "https://www.linkedin.com/in/albert-alegret-i-garcia-34898426b/"
+    },
+    {
+      "name": "Juan R González",
+      "institution": "Barcelona Institute for Global Health (ISGlobal)",
+      "institution_url": "https://isglobal.org",
+      "email": "juan.r.gonzalez@isglobal.org",
+      "orcid": "0000-0003-3267-2146",
+      "linkedin": "https://www.linkedin.com/in/juan-r-gonzalez-50a808171",
+      "github": "isglobal-brge"
+    }
+  ]
 }
