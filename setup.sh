@@ -14,7 +14,7 @@ NC="\033[0m" # No Color
 
 # Configuration
 SCRIPT_NAME="configure-environment.sh"
-GITHUB_RAW_URL="https://raw.githubusercontent.com/isglobal-brge/dsHPC-docker/main/${SCRIPT_NAME}"
+GITHUB_RAW_URL="https://raw.githubusercontent.com/isglobal-brge/dsHPC-core/main/${SCRIPT_NAME}"
 
 # Print banner
 echo -e "${BLUE}┌────────────────────────────────────────────────────┐${NC}"

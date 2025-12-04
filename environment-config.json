@@ -2,7 +2,7 @@
   "environment_name": "dsHPC-epiflare",
   "display_name": "DataSHIELD HPC Environment for EpiFLARE",
   "docker_stack_prefix": "dshpc-epiflare",
-  "base_repository": "https://github.com/isglobal-brge/dsHPC-docker.git",
+  "base_repository": "https://github.com/isglobal-brge/dsHPC-core.git",
   "default_api_port": 8001,
   "default_admin_port": 8002,
   "description": "Provides DataSHIELD-compatible functions for methylation array analysis using the dsHPC infrastructure. Includes functions for reading IDAT files and performing PCA analysis with local plot generation.",
